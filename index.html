@@ -64,7 +64,8 @@ body{font-family:'Noto Sans SC',system-ui,-apple-system,sans-serif;background:va
 
 /* Table */
 .table-wrap{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
-.table-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.table-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.table-header .left{display:flex;align-items:baseline;gap:8px}
 .table-title{font-size:14px;font-weight:600}
 .table-count{font-size:12px;color:var(--text2)}
 table{width:100%;border-collapse:collapse;font-size:13px}
@@ -292,8 +293,23 @@ function renderSlots() {
   const data = getFilteredSlots().sort((a,b) => a.minDays - b.minDays);
   const count = data.length;
   const grabCount = data.reduce((s,x)=>s+x.grab,0);
+  // Build city list for download
+  const slotCities = [...new Set(data.map(s=>s.city))].sort();
+  if (!window._dlSlotCities) window._dlSlotCities = new Set();
+  const selC = window._dlSlotCities.size;
 
-  let h = `<div class="table-wrap"><div class="table-header"><span class="table-title">坑位追踪明细</span><span class="table-count">${count} 个坑位 · ${grabCount} 条可抢</span></div>`;
+  let h = `<div class="table-wrap"><div class="table-header"><div class="left"><span class="table-title">坑位追踪明细</span><span class="table-count">${count} 个坑位 · ${grabCount} 条可抢</span></div>`;
+  h += `<div class="dl-bar">`;
+  h += `<div class="city-picker"><button class="city-picker-btn" onclick="toggleSlotCityPicker(event)">选择城市${selC?' ('+selC+')':''}<span class="arrow">▾</span></button>`;
+  h += `<div class="city-dropdown" id="slotCityDropdown"><div class="city-dropdown-header"><input placeholder="搜索城市..." oninput="filterSlotCityList(this.value)"></div>`;
+  h += `<div class="city-list" id="slotCityList">`;
+  slotCities.forEach(c => {
+    const chk = window._dlSlotCities.has(c) ? ' checked' : '';
+    h += `<label><input type="checkbox"${chk} onchange="toggleDlSlotCity('${c}')"><span class="city-name">${c}</span></label>`;
+  });
+  h += `</div><div class="dl-actions"><button class="sel-all" onclick="toggleAllSlotCities()">全选</button><button class="dl-go" onclick="downloadSlots()">下载 XLSX</button></div></div></div>`;
+  h += `<button class="dl-btn" onclick="downloadSlots()"><svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>下载</button>`;
+  h += `</div></div>`;
   h += '<div class="scrollable"><table><thead><tr><th></th><th>紧急度</th><th>大区</th><th>渠道经理</th><th>城市</th><th>类目</th><th>占用数</th><th>可抢</th><th>最早到期</th><th>剩余天数</th></tr></thead><tbody>';
 
   data.forEach((s,i) => {
@@ -326,14 +342,13 @@ function renderSlots() {
 
 function renderEmpty() {
   const data = getFilteredEmpty().sort((a,b) => a.city.localeCompare(b.city));
-  // Build city counts
   const cityCounts = {};
   data.forEach(e => { cityCounts[e.city] = (cityCounts[e.city]||0)+1; });
   const cities = Object.keys(cityCounts).sort();
   if (!window._dlCities) window._dlCities = new Set();
   const selCount = window._dlCities.size;
 
-  let h = `<div class="table-wrap"><div class="table-header"><span class="table-title">可售空位明细</span><span class="table-count">${data.length} 个空位</span>`;
+  let h = `<div class="table-wrap"><div class="table-header"><div class="left"><span class="table-title">可售空位明细</span><span class="table-count">${data.length} 个空位</span></div>`;
   h += `<div class="dl-bar">`;
   h += `<div class="city-picker"><button class="city-picker-btn" onclick="toggleCityPicker(event)">选择城市${selCount?' ('+selCount+')':''}<span class="arrow">▾</span></button>`;
   h += `<div class="city-dropdown" id="cityDropdown"><div class="city-dropdown-header"><input placeholder="搜索城市..." oninput="filterCityList(this.value)"></div>`;
@@ -411,9 +426,58 @@ function downloadEmpty() {
   XLSX.writeFile(wb, '顶展可售空位_' + label + '_' + DATA.date + '.xlsx');
 }
 
+function toggleSlotCityPicker(e) {
+  e.stopPropagation();
+  const dd = document.getElementById('slotCityDropdown');
+  dd.classList.toggle('open');
+  if (dd.classList.contains('open')) {
+    dd.querySelector('input').focus();
+    document.addEventListener('click', function closeS() { dd.classList.remove('open'); document.removeEventListener('click',closeS); }, {once:true});
+  }
+}
+function toggleDlSlotCity(city) {
+  if (window._dlSlotCities.has(city)) window._dlSlotCities.delete(city);
+  else window._dlSlotCities.add(city);
+}
+function toggleAllSlotCities() {
+  const boxes = document.querySelectorAll('#slotCityList input[type=checkbox]');
+  const allChecked = Array.from(boxes).every(b => b.checked);
+  boxes.forEach(b => { b.checked = !allChecked; });
+  if (!allChecked) {
+    boxes.forEach(b => { const city = b.parentElement.querySelector('.city-name').textContent; window._dlSlotCities.add(city); });
+  } else {
+    window._dlSlotCities.clear();
+  }
+}
+function filterSlotCityList(q) {
+  document.querySelectorAll('#slotCityList label').forEach(lb => {
+    lb.style.display = lb.querySelector('.city-name').textContent.includes(q) ? '' : 'none';
+  });
+}
+function downloadSlots() {
+  const selected = window._dlSlotCities;
+  let rows;
+  if (selected.size > 0) {
+    rows = DATA.slots.filter(s => selected.has(s.city));
+  } else {
+    rows = getFilteredSlots();
+  }
+  if (!rows.length) { alert('没有可下载的数据'); return; }
+  const wsData = [['紧急度','大区','渠道经理','服务商','城市','一级类目','二级类目','三级类目','占用数','可抢数','最早到期','剩余天数']];
+  rows.sort((a,b)=>a.minDays-b.minDays).forEach(s => {
+    wsData.push([s.urgency, s.region, s.mgr, s.sp, s.city, s.cat1, s.cat2, s.cat3||'', s.orders, s.grab, s.minEnd, s.minDays]);
+  });
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  ws['!cols'] = [{wch:12},{wch:8},{wch:10},{wch:22},{wch:10},{wch:8},{wch:12},{wch:12},{wch:8},{wch:8},{wch:10},{wch:8}];
+  XLSX.utils.book_append_sheet(wb, ws, '坑位追踪');
+  const label = selected.size ? Array.from(selected).join('_').slice(0,40) : '全部';
+  XLSX.writeFile(wb, '顶展坑位追踪_' + label + '_' + DATA.date + '.xlsx');
+}
+
 function renderCity() {
   const data = getFilteredCity().sort((a,b) => b.urgentSlots - a.urgentSlots || b.empty - a.empty);
-  let h = `<div class="table-wrap"><div class="table-header"><span class="table-title">城市维度总览</span><span class="table-count">${data.length} 个城市</span></div>`;
+  let h = `<div class="table-wrap"><div class="table-header"><div class="left"><span class="table-title">城市维度总览</span><span class="table-count">${data.length} 个城市</span></div></div>`;
   h += '<div class="scrollable"><table><thead><tr><th>大区</th><th>渠道经理</th><th>服务商</th><th>城市</th><th>可售空位</th><th>已占坑位</th><th>总坑位</th><th>空置率</th><th>紧急坑位</th></tr></thead><tbody>';
 
   data.forEach(c => {
@@ -438,7 +502,7 @@ function toggleDetail(i) {
 
 function renderRegion() {
   const data = DATA.regionStats;
-  let h = '<div class="table-wrap"><div class="table-header"><span class="table-title">区域库存全景</span><span class="table-count">5大区 · 服务商城市维度</span></div>';
+  let h = '<div class="table-wrap"><div class="table-header"><div class="left"><span class="table-title">区域库存全景</span><span class="table-count">5大区 · 服务商城市维度</span></div></div>';
   h += '<div class="scrollable"><table><thead><tr><th rowspan="2" style="vertical-align:middle">大区</th><th rowspan="2" style="vertical-align:middle">覆盖城市</th><th colspan="3" style="text-align:center;background:#EEF2FF;border-bottom:1px solid #C7D2FE">库存概况</th><th colspan="5" style="text-align:center;background:#FEF3C7;border-bottom:1px solid #FDE68A">占用订单优先级分布</th><th rowspan="2" style="vertical-align:middle">紧急坑位组</th></tr>';
   h += '<tr><th style="background:#EEF2FF">可售库存</th><th style="background:#EEF2FF">已占</th><th style="background:#EEF2FF">空置率</th><th style="background:#FEE2E2;color:#DC2626">已到期</th><th style="background:#FEE2E2;color:#DC2626">近7天</th><th style="background:#FFEDD5;color:#EA580C">近15天</th><th style="background:#FEF9C3;color:#CA8A04">近30天</th><th style="background:#F3F4F6;color:#6B7280">占用中</th></tr></thead><tbody>';
 
