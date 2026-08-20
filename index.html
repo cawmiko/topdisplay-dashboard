@@ -105,6 +105,19 @@ tr.row-关注-30天内{background:#FFFFF5}tr.row-关注-30天内:hover{backgroun
 .empty-state{text-align:center;padding:60px 20px;color:var(--text3)}
 .empty-state .icon{font-size:48px;margin-bottom:12px}
 
+/* Glossary */
+.glossary{margin-bottom:16px;background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.glossary-toggle{padding:12px 18px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text2);list-style:none;display:flex;align-items:center;gap:6px;transition:background .15s;user-select:none}
+.glossary-toggle:hover{background:var(--bg)}
+.glossary-toggle::-webkit-details-marker{display:none}
+.glossary-toggle::after{content:'▸';margin-left:auto;transition:transform .2s;font-size:11px}
+.glossary[open] .glossary-toggle::after{transform:rotate(90deg)}
+.glossary-body{padding:4px 18px 16px;border-top:1px solid var(--border)}
+.glossary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px}
+.glossary-item{display:flex;gap:8px;align-items:flex-start;padding:8px 0}
+.glossary-term{font-size:12px;font-weight:700;color:var(--accent);white-space:nowrap;min-width:56px;padding:2px 6px;background:var(--blue-bg);border-radius:4px;text-align:center;flex-shrink:0}
+.glossary-desc{font-size:12px;color:var(--text2);line-height:1.6}
+
 /* Responsive */
 @media(max-width:768px){
   .container{padding:10px}
@@ -126,6 +139,20 @@ tr.row-关注-30天内{background:#FFFFF5}tr.row-关注-30天内:hover{backgroun
     <h1>顶展坑位追踪看板</h1>
     <div class="sub">数据日期: 2026-08-21 · 服务商城市顶展占用 & 可售空位实时追踪</div>
   </div>
+
+  <details class="glossary" id="glossary">
+    <summary class="glossary-toggle">📖 指标说明</summary>
+    <div class="glossary-body">
+      <div class="glossary-grid">
+        <div class="glossary-item"><span class="glossary-term">坑位</span><span class="glossary-desc">一个城市 × 一个具体类目（如"成都市×串串香"）= 一个坑位，是顶展可售的最小单位</span></div>
+        <div class="glossary-item"><span class="glossary-term">紧急坑位</span><span class="glossary-desc">该坑位下有任意一条订单在30天内到期（且未被WAIT_PUBLISH续单覆盖），意味着这个位置即将空出，可以跟进售卖</span></div>
+        <div class="glossary-item"><span class="glossary-term">可抢订单</span><span class="glossary-desc">订单级别统计：有效到期日在30天内 + PERFORMANCING状态的订单数。区别于坑位数——同一坑位可能有多条可抢订单</span></div>
+        <div class="glossary-item"><span class="glossary-term">可售空位</span><span class="glossary-desc">刊例中可售但目前没有任何订单占用的坑位，即完全空白、可以直接去卖的位置</span></div>
+        <div class="glossary-item"><span class="glossary-term">WP覆盖</span><span class="glossary-desc">WAIT_PUBLISH：当前订单虽快到期，但已有续单排期。此时有效到期日取续单结束日，该坑位短期内仍不可抢</span></div>
+        <div class="glossary-item"><span class="glossary-term">优先级</span><span class="glossary-desc">P0=近7天到期 · P1=近15天 · P2=近30天 · P3=占用中(>30天)。受WP影响时按续单日期重新计算</span></div>
+      </div>
+    </div>
+  </details>
 
   <div class="stats" id="statsRow"></div>
 
