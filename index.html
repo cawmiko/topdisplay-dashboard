@@ -121,6 +121,33 @@ tr.row-已有签约中{background:#EFF6FF}tr.row-已有签约中:hover{backgroun
 .glossary-term{font-size:12px;font-weight:700;color:var(--accent);white-space:nowrap;min-width:56px;padding:2px 6px;background:var(--blue-bg);border-radius:4px;text-align:center;flex-shrink:0}
 .glossary-desc{font-size:12px;color:var(--text2);line-height:1.6}
 
+/* Download panel */
+.dl-bar{display:flex;align-items:center;gap:10px;margin-left:auto}
+.dl-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border:1px solid var(--blue-border);border-radius:8px;background:var(--blue-bg);color:var(--blue);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;font-family:inherit}
+.dl-btn:hover{background:var(--blue);color:#fff;border-color:var(--blue)}
+.dl-btn svg{width:14px;height:14px;fill:currentColor}
+.city-picker{position:relative;display:inline-block}
+.city-picker-btn{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:var(--card);color:var(--text2);font-size:12px;cursor:pointer;transition:all .15s;font-family:inherit}
+.city-picker-btn:hover{border-color:var(--accent);color:var(--accent)}
+.city-picker-btn .arrow{font-size:10px;margin-left:2px}
+.city-dropdown{position:absolute;top:calc(100% + 4px);right:0;z-index:100;background:var(--card);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.12);width:260px;max-height:360px;overflow:hidden;display:none;flex-direction:column}
+.city-dropdown.open{display:flex}
+.city-dropdown-header{padding:10px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.city-dropdown-header input{flex:1;padding:5px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;outline:none;font-family:inherit}
+.city-dropdown-header input:focus{border-color:var(--accent)}
+.city-list{overflow-y:auto;max-height:280px;padding:4px 0}
+.city-list label{display:flex;align-items:center;gap:8px;padding:6px 12px;font-size:12px;cursor:pointer;transition:background .1s}
+.city-list label:hover{background:var(--bg)}
+.city-list label input[type=checkbox]{accent-color:var(--accent)}
+.city-list .city-name{flex:1}
+.city-list .city-count{color:var(--text3);font-size:11px}
+.dl-actions{padding:8px 12px;border-top:1px solid var(--border);display:flex;gap:6px}
+.dl-actions button{flex:1;padding:6px;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s}
+.dl-actions .sel-all{background:var(--bg);color:var(--text2)}
+.dl-actions .sel-all:hover{background:var(--border)}
+.dl-actions .dl-go{background:var(--blue);color:#fff}
+.dl-actions .dl-go:hover{background:#1D4ED8}
+
 /* Responsive */
 @media(max-width:768px){
   .container{padding:10px}
@@ -135,6 +162,7 @@ tr.row-已有签约中{background:#EFF6FF}tr.row-已有签约中:hover{backgroun
   .tab{padding:8px 12px;font-size:13px}
 }
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"><\/script>
 </head>
 <body>
 <div class="container">
@@ -207,6 +235,8 @@ function renderFilters() {
 
   h += `<input class="search-box" placeholder="搜索城市..." value="${filters.search}" oninput="setFilter('search',this.value)">`;
   bar.innerHTML = h;
+  const inp = bar.querySelector('.search-box');
+  if (inp) { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
 }
 
 function setFilter(key, val) {
@@ -296,7 +326,25 @@ function renderSlots() {
 
 function renderEmpty() {
   const data = getFilteredEmpty().sort((a,b) => a.city.localeCompare(b.city));
-  let h = `<div class="table-wrap"><div class="table-header"><span class="table-title">可售空位明细</span><span class="table-count">${data.length} 个空位</span></div>`;
+  // Build city counts
+  const cityCounts = {};
+  data.forEach(e => { cityCounts[e.city] = (cityCounts[e.city]||0)+1; });
+  const cities = Object.keys(cityCounts).sort();
+  if (!window._dlCities) window._dlCities = new Set();
+  const selCount = window._dlCities.size;
+
+  let h = `<div class="table-wrap"><div class="table-header"><span class="table-title">可售空位明细</span><span class="table-count">${data.length} 个空位</span>`;
+  h += `<div class="dl-bar">`;
+  h += `<div class="city-picker"><button class="city-picker-btn" onclick="toggleCityPicker(event)">选择城市${selCount?' ('+selCount+')':''}<span class="arrow">▾</span></button>`;
+  h += `<div class="city-dropdown" id="cityDropdown"><div class="city-dropdown-header"><input placeholder="搜索城市..." oninput="filterCityList(this.value)"></div>`;
+  h += `<div class="city-list" id="cityList">`;
+  cities.forEach(c => {
+    const chk = window._dlCities.has(c) ? ' checked' : '';
+    h += `<label><input type="checkbox"${chk} onchange="toggleDlCity('${c}')"><span class="city-name">${c}</span><span class="city-count">${cityCounts[c]}</span></label>`;
+  });
+  h += `</div><div class="dl-actions"><button class="sel-all" onclick="toggleAllCities(${cities.length})">全选</button><button class="dl-go" onclick="downloadEmpty()">下载 XLSX</button></div></div></div>`;
+  h += `<button class="dl-btn" onclick="downloadEmpty()"><svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>下载</button>`;
+  h += `</div></div>`;
   h += '<div class="scrollable"><table><thead><tr><th>大区</th><th>渠道经理</th><th>服务商</th><th>城市</th><th>一级类目</th><th>二级类目</th><th>三级类目</th><th>刊例价/30天</th><th>日均价</th></tr></thead><tbody>';
 
   data.forEach(e => {
@@ -306,6 +354,61 @@ function renderEmpty() {
   if (!data.length) h += '<tr><td colspan="9"><div class="empty-state"><div class="icon">📭</div>没有匹配的空位</div></td></tr>';
   h += '</tbody></table></div></div>';
   document.getElementById('tableArea').innerHTML = h;
+}
+
+function toggleCityPicker(e) {
+  e.stopPropagation();
+  const dd = document.getElementById('cityDropdown');
+  dd.classList.toggle('open');
+  if (dd.classList.contains('open')) {
+    dd.querySelector('input').focus();
+    document.addEventListener('click', closeCityPicker, {once:true});
+  }
+}
+function closeCityPicker() {
+  const dd = document.getElementById('cityDropdown');
+  if (dd) dd.classList.remove('open');
+}
+function toggleDlCity(city) {
+  if (window._dlCities.has(city)) window._dlCities.delete(city);
+  else window._dlCities.add(city);
+}
+function toggleAllCities(total) {
+  const boxes = document.querySelectorAll('#cityList input[type=checkbox]');
+  const allChecked = Array.from(boxes).every(b => b.checked);
+  boxes.forEach(b => { b.checked = !allChecked; });
+  if (!allChecked) {
+    boxes.forEach(b => { const city = b.parentElement.querySelector('.city-name').textContent; window._dlCities.add(city); });
+  } else {
+    window._dlCities.clear();
+  }
+}
+function filterCityList(q) {
+  const labels = document.querySelectorAll('#cityList label');
+  labels.forEach(lb => {
+    const name = lb.querySelector('.city-name').textContent;
+    lb.style.display = name.includes(q) ? '' : 'none';
+  });
+}
+function downloadEmpty() {
+  const selected = window._dlCities;
+  let rows;
+  if (selected.size > 0) {
+    rows = DATA.empty.filter(e => selected.has(e.city));
+  } else {
+    rows = getFilteredEmpty();
+  }
+  if (!rows.length) { alert('没有可下载的数据'); return; }
+  const wsData = [['大区','渠道经理','服务商','城市','一级类目','二级类目','三级类目','刊例价/30天','日均价']];
+  rows.sort((a,b)=>a.city.localeCompare(b.city)).forEach(e => {
+    wsData.push([e.region, e.mgr, e.sp, e.city, e.cat1, e.cat2, e.cat3||'', e.price30, e.dailyPrice]);
+  });
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  ws['!cols'] = [{wch:8},{wch:10},{wch:22},{wch:10},{wch:8},{wch:12},{wch:12},{wch:12},{wch:8}];
+  XLSX.utils.book_append_sheet(wb, ws, '可售空位');
+  const label = selected.size ? Array.from(selected).join('_').slice(0,40) : '全部';
+  XLSX.writeFile(wb, '顶展可售空位_' + label + '_' + DATA.date + '.xlsx');
 }
 
 function renderCity() {
