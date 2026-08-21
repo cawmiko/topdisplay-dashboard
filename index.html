@@ -213,6 +213,7 @@ tr.row-已有签约中{background:#EFF6FF}tr.row-已有签约中:hover{backgroun
   </div>
 
   <div class="filters" id="filterBar"></div>
+  <input class="search-box" id="searchBox" placeholder="搜索城市..." oninput="filters.search=this.value;renderTable()">
 
   <div id="tableArea"></div>
 </div>
@@ -249,11 +250,7 @@ function renderFilters() {
     h += urgencies.map(u => `<span class="chip urg-${urgClass(u)}${filters.urgency===u?' active':''}" onclick="setFilter('urgency','${u}')">${u}</span>`).join('');
     h += '</div></div>';
   }
-
-  h += `<input class="search-box" placeholder="搜索城市..." value="${filters.search}" oninput="setFilter('search',this.value)">`;
   bar.innerHTML = h;
-  const inp = bar.querySelector('.search-box');
-  if (inp) { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
 }
 
 function setFilter(key, val) {
@@ -265,6 +262,7 @@ function setFilter(key, val) {
 function switchTab(tab) {
   currentTab = tab;
   filters = {region:'全部',urgency:'全部',search:''};
+  document.getElementById('searchBox').value = '';
   document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['region','slots','empty','city'][i]===tab));
   renderFilters();
   renderTable();
