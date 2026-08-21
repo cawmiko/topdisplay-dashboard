@@ -535,18 +535,18 @@ function renderRegion() {
   });
   rankH += '</tbody></table></div></div>';
 
-  // Category ranking by occupied count
+  // Category ranking by finest granularity (cat3 if exists, else cat2)
   const catMap = {};
   DATA.slots.forEach(s => {
-    const k = s.cat2 || s.cat1;
-    if (!catMap[k]) catMap[k] = {name:k, occupied:0, orders:0, grab:0, empty:0};
+    const k = s.cat3 || s.cat2 || s.cat1;
+    if (!catMap[k]) catMap[k] = {name:k, parent:s.cat2, occupied:0, orders:0, grab:0, empty:0};
     catMap[k].occupied++;
     catMap[k].orders += s.orders;
     catMap[k].grab += s.grab;
   });
   DATA.empty.forEach(e => {
-    const k = e.cat2 || e.cat1;
-    if (!catMap[k]) catMap[k] = {name:k, occupied:0, orders:0, grab:0, empty:0};
+    const k = e.cat3 || e.cat2 || e.cat1;
+    if (!catMap[k]) catMap[k] = {name:k, parent:e.cat2, occupied:0, orders:0, grab:0, empty:0};
     catMap[k].empty++;
   });
   const catArr = Object.values(catMap).map(c => ({...c, total:c.occupied+c.empty, rate:c.occupied+c.empty>0?c.occupied/(c.occupied+c.empty):0}));
@@ -555,15 +555,15 @@ function renderRegion() {
   const catBot5 = catSorted.slice(-5).reverse();
 
   rankH += '<div class="rank-row">';
-  rankH += '<div class="rank-card top"><div class="rank-title">🔥 最热卖 Top 5 类目</div><table><thead><tr><th></th><th>类目</th><th style="text-align:center">已占坑位</th><th style="text-align:center">可售坑位</th><th style="text-align:center">订单数</th><th style="text-align:center">可抢</th><th style="text-align:center">占用率</th></tr></thead><tbody>';
+  rankH += '<div class="rank-card top"><div class="rank-title">🔥 最热卖 Top 5 类目</div><table><thead><tr><th></th><th>类目</th><th>所属</th><th style="text-align:center">已占坑位</th><th style="text-align:center">可售坑位</th><th style="text-align:center">订单数</th><th style="text-align:center">可抢</th><th style="text-align:center">占用率</th></tr></thead><tbody>';
   catTop5.forEach((c,i) => {
-    rankH += `<tr><td><span class="rank-num">${i+1}</span></td><td style="font-weight:600">${c.name}</td><td style="text-align:center;font-weight:700;color:var(--orange)">${c.occupied}</td><td style="text-align:center">${c.empty}</td><td style="text-align:center">${c.orders}</td><td style="text-align:center;color:${c.grab>0?'var(--red)':'var(--text3)'}">${c.grab}</td><td style="text-align:center;color:var(--green)">${(c.rate*100).toFixed(1)}%</td></tr>`;
+    rankH += `<tr><td><span class="rank-num">${i+1}</span></td><td style="font-weight:600">${c.name}</td><td style="font-size:11px;color:var(--text2)">${c.parent!==c.name?c.parent:''}</td><td style="text-align:center;font-weight:700;color:var(--orange)">${c.occupied}</td><td style="text-align:center">${c.empty}</td><td style="text-align:center">${c.orders}</td><td style="text-align:center;color:${c.grab>0?'var(--red)':'var(--text3)'}">${c.grab}</td><td style="text-align:center;color:var(--green)">${(c.rate*100).toFixed(1)}%</td></tr>`;
   });
   rankH += '</tbody></table></div>';
 
-  rankH += '<div class="rank-card bot"><div class="rank-title">📉 最冷清 Bottom 5 类目</div><table><thead><tr><th></th><th>类目</th><th style="text-align:center">已占坑位</th><th style="text-align:center">可售坑位</th><th style="text-align:center">订单数</th><th style="text-align:center">可抢</th><th style="text-align:center">占用率</th></tr></thead><tbody>';
+  rankH += '<div class="rank-card bot"><div class="rank-title">📉 最冷清 Bottom 5 类目</div><table><thead><tr><th></th><th>类目</th><th>所属</th><th style="text-align:center">已占坑位</th><th style="text-align:center">可售坑位</th><th style="text-align:center">订单数</th><th style="text-align:center">可抢</th><th style="text-align:center">占用率</th></tr></thead><tbody>';
   catBot5.forEach((c,i) => {
-    rankH += `<tr><td><span class="rank-num">${i+1}</span></td><td style="font-weight:600">${c.name}</td><td style="text-align:center;font-weight:700;color:var(--blue)">${c.occupied}</td><td style="text-align:center">${c.empty}</td><td style="text-align:center">${c.orders}</td><td style="text-align:center;color:var(--text3)">${c.grab}</td><td style="text-align:center;color:var(--green)">${(c.rate*100).toFixed(1)}%</td></tr>`;
+    rankH += `<tr><td><span class="rank-num">${i+1}</span></td><td style="font-weight:600">${c.name}</td><td style="font-size:11px;color:var(--text2)">${c.parent!==c.name?c.parent:''}</td><td style="text-align:center;font-weight:700;color:var(--blue)">${c.occupied}</td><td style="text-align:center">${c.empty}</td><td style="text-align:center">${c.orders}</td><td style="text-align:center;color:var(--text3)">${c.grab}</td><td style="text-align:center;color:var(--green)">${(c.rate*100).toFixed(1)}%</td></tr>`;
   });
   rankH += '</tbody></table></div></div>';
 
