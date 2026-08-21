@@ -535,6 +535,38 @@ function renderRegion() {
   });
   rankH += '</tbody></table></div></div>';
 
+  // Category ranking by occupied count
+  const catMap = {};
+  DATA.slots.forEach(s => {
+    const k = s.cat2 || s.cat1;
+    if (!catMap[k]) catMap[k] = {name:k, occupied:0, orders:0, grab:0, empty:0};
+    catMap[k].occupied++;
+    catMap[k].orders += s.orders;
+    catMap[k].grab += s.grab;
+  });
+  DATA.empty.forEach(e => {
+    const k = e.cat2 || e.cat1;
+    if (!catMap[k]) catMap[k] = {name:k, occupied:0, orders:0, grab:0, empty:0};
+    catMap[k].empty++;
+  });
+  const catArr = Object.values(catMap).map(c => ({...c, total:c.occupied+c.empty, rate:c.occupied+c.empty>0?c.occupied/(c.occupied+c.empty):0}));
+  const catSorted = catArr.sort((a,b) => b.occupied - a.occupied);
+  const catTop5 = catSorted.slice(0, 5);
+  const catBot5 = catSorted.slice(-5).reverse();
+
+  rankH += '<div class="rank-row">';
+  rankH += '<div class="rank-card top"><div class="rank-title">🔥 最热卖 Top 5 类目</div><table><thead><tr><th></th><th>类目</th><th style="text-align:center">已占坑位</th><th style="text-align:center">可售坑位</th><th style="text-align:center">订单数</th><th style="text-align:center">可抢</th><th style="text-align:center">占用率</th></tr></thead><tbody>';
+  catTop5.forEach((c,i) => {
+    rankH += `<tr><td><span class="rank-num">${i+1}</span></td><td style="font-weight:600">${c.name}</td><td style="text-align:center;font-weight:700;color:var(--orange)">${c.occupied}</td><td style="text-align:center">${c.empty}</td><td style="text-align:center">${c.orders}</td><td style="text-align:center;color:${c.grab>0?'var(--red)':'var(--text3)'}">${c.grab}</td><td style="text-align:center;color:var(--green)">${(c.rate*100).toFixed(1)}%</td></tr>`;
+  });
+  rankH += '</tbody></table></div>';
+
+  rankH += '<div class="rank-card bot"><div class="rank-title">📉 最冷清 Bottom 5 类目</div><table><thead><tr><th></th><th>类目</th><th style="text-align:center">已占坑位</th><th style="text-align:center">可售坑位</th><th style="text-align:center">订单数</th><th style="text-align:center">可抢</th><th style="text-align:center">占用率</th></tr></thead><tbody>';
+  catBot5.forEach((c,i) => {
+    rankH += `<tr><td><span class="rank-num">${i+1}</span></td><td style="font-weight:600">${c.name}</td><td style="text-align:center;font-weight:700;color:var(--blue)">${c.occupied}</td><td style="text-align:center">${c.empty}</td><td style="text-align:center">${c.orders}</td><td style="text-align:center;color:var(--text3)">${c.grab}</td><td style="text-align:center;color:var(--green)">${(c.rate*100).toFixed(1)}%</td></tr>`;
+  });
+  rankH += '</tbody></table></div></div>';
+
   let h = rankH;
   h += '<div class="table-wrap"><div class="table-header"><div class="left"><span class="table-title">区域库存全景</span><span class="table-count">5大区 · 服务商城市维度</span></div></div>';
   h += '<div class="scrollable"><table><thead><tr><th rowspan="2" style="vertical-align:middle">大区</th><th rowspan="2" style="vertical-align:middle">覆盖城市</th><th colspan="3" style="text-align:center;background:#EEF2FF;border-bottom:1px solid #C7D2FE">库存概况</th><th colspan="5" style="text-align:center;background:#FEF3C7;border-bottom:1px solid #FDE68A">占用订单优先级分布</th><th rowspan="2" style="vertical-align:middle">紧急坑位组</th></tr>';
