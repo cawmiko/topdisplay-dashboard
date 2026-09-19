@@ -554,14 +554,14 @@ function downloadSlots() {
 function renderCity() {
   const data = getFilteredCity().sort((a,b) => b.urgentSlots - a.urgentSlots || b.empty - a.empty);
   let h = `<div class="table-wrap"><div class="table-header"><div class="left"><span class="table-title">城市维度总览</span><span class="table-count">${data.length} 个城市</span></div></div>`;
-  h += '<div class="scrollable"><table><thead><tr><th>大区</th><th>渠道经理</th><th>服务商</th><th>城市</th><th>可售空位</th><th>已占坑位</th><th>总坑位</th><th>空置率</th><th>紧急坑位</th></tr></thead><tbody>';
+  h += '<div class="scrollable"><table><thead><tr><th>大区</th><th>渠道经理</th><th>城市</th><th>可售空位</th><th>已占坑位</th><th>总坑位</th><th>空置率</th><th>紧急坑位</th></tr></thead><tbody>';
 
   data.forEach(c => {
     const rateColor = c.rate >= 0.9 ? 'var(--green)' : c.rate >= 0.7 ? 'var(--yellow)' : 'var(--orange)';
-    h += `<tr><td>${c.region}</td><td style="font-size:12px">${c.mgr}</td><td style="font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${c.sp}">${c.sp.length>18?c.sp.slice(0,18)+'...':c.sp}</td><td style="font-weight:600">${c.city}${hlBadge(c.city)}</td><td style="text-align:center;color:var(--green);font-weight:600">${c.empty}</td><td style="text-align:center">${c.occupied}</td><td style="text-align:center">${c.total}</td><td style="text-align:center;font-weight:700;color:${rateColor}">${(c.rate*100).toFixed(1)}%</td><td style="text-align:center;font-weight:700;color:${c.urgentSlots>0?'var(--red)':'var(--text3)'}">${c.urgentSlots}</td></tr>`;
+    h += `<tr><td>${c.region}</td><td style="font-size:12px">${c.mgr}</td><td style="font-weight:600">${c.city}${hlBadge(c.city)}</td><td style="text-align:center;color:var(--green);font-weight:600">${c.empty}</td><td style="text-align:center">${c.occupied}</td><td style="text-align:center">${c.total}</td><td style="text-align:center;font-weight:700;color:${rateColor}">${(c.rate*100).toFixed(1)}%</td><td style="text-align:center;font-weight:700;color:${c.urgentSlots>0?'var(--red)':'var(--text3)'}">${c.urgentSlots}</td></tr>`;
   });
 
-  if (!data.length) h += '<tr><td colspan="9"><div class="empty-state"><div class="icon">📭</div>没有匹配的城市</div></td></tr>';
+  if (!data.length) h += '<tr><td colspan="8"><div class="empty-state"><div class="icon">📭</div>没有匹配的城市</div></td></tr>';
   h += '</tbody></table></div></div>';
   document.getElementById('tableArea').innerHTML = h;
 }
