@@ -111,8 +111,8 @@ tr.row-已有签约中{background:#EFF6FF}tr.row-已有签约中:hover{backgroun
 tr.row-即将5天内到期可下一轮抢占{background:#F0FDFA}tr.row-即将5天内到期可下一轮抢占:hover{background:#CCFBF1}
 tr.row-hot{background:#FFF7ED}tr.row-hot:hover{background:#FFF1E0}
 .hot-badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;background:#FFF1E0;color:#D97706;border:1px solid #FCD34D;white-space:nowrap}
-.chip.hot-中餐,.chip.hot-烧烤,.chip.hot-火锅{border-color:#FCD34D}
-.chip.hot-中餐.active,.chip.hot-烧烤.active,.chip.hot-火锅.active{background:#D97706;border-color:#D97706;color:#fff}
+.chip.hot-中餐,.chip.hot-烧烤,.chip.hot-火锅,.chip.hot-海鲜水产{border-color:#FCD34D}
+.chip.hot-中餐.active,.chip.hot-烧烤.active,.chip.hot-火锅.active,.chip.hot-海鲜水产.active{background:#D97706;border-color:#D97706;color:#fff}
 
 /* Expandable rows */
 .expand-btn{cursor:pointer;color:var(--accent);font-weight:600;border:none;background:none;font-size:16px;padding:2px 6px;border-radius:4px;transition:background .15s}
@@ -259,7 +259,7 @@ let filters = {region:'全部',urgency:'全部',hotCat:'全部',mgr:'',search:''
 
 const regions = ['全部','华北','华东','华南','华西','华中'];
 const urgencies = ['全部','紧急-已到期','紧急-7天内','较急-15天内','关注-30天内','即将5天内到期可下一轮抢占','已有签约中','暂无','无可抢'];
-const hotCats = ['全部','中餐','烧烤','火锅'];
+const hotCats = ['全部','中餐','烧烤','火锅','海鲜水产'];
 const isHot = e => hotCats.slice(1).some(k => e.cat1===k || e.cat2===k || e.cat3===k);
 const urgClass = u => u.replace(/[^\u4e00-\u9fa5A-Za-z0-9-]/g,'');
 
