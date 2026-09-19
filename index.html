@@ -434,15 +434,15 @@ function renderEmpty() {
   h += `</div><div class="dl-actions"><button class="sel-all" onclick="toggleAllCities(${cities.length})">全选</button><button class="dl-go" onclick="downloadEmpty()">下载 XLSX</button></div></div></div>`;
   h += `<button class="dl-btn" onclick="downloadEmpty()"><svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>下载</button>`;
   h += `</div></div>`;
-  h += '<div class="scrollable"><table><thead><tr><th>热门</th><th>大区</th><th>渠道经理</th><th>服务商</th><th>城市</th><th>一级类目</th><th>二级类目</th><th>三级类目</th><th>刊例价/30天</th><th>日均价</th></tr></thead><tbody>';
+  h += '<div class="scrollable"><table><thead><tr><th>热门</th><th>大区</th><th>渠道经理</th><th>城市</th><th>一级类目</th><th>二级类目</th><th>三级类目</th><th>刊例价/30天</th><th>日均价</th></tr></thead><tbody>';
 
   data.forEach(e => {
     const hot = isHot(e);
     const hotTag = hot ? '<span class="hot-badge">🔥 热门</span>' : '';
-    h += `<tr class="${hot?'row-hot':''}"><td style="text-align:center">${hotTag}</td><td>${e.region}</td><td style="font-size:12px">${e.mgr}</td><td style="font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${e.sp}">${e.sp.length>20?e.sp.slice(0,20)+'...':e.sp}</td><td style="font-weight:600">${e.city}${hlBadge(e.city)}</td><td>${e.cat1}</td><td>${e.cat2}</td><td>${e.cat3||'-'}</td><td style="text-align:right;font-weight:600">¥${e.price30.toLocaleString()}</td><td style="text-align:right;color:var(--text2)">¥${e.dailyPrice}</td></tr>`;
+    h += `<tr class="${hot?'row-hot':''}"><td style="text-align:center">${hotTag}</td><td>${e.region}</td><td style="font-size:12px">${e.mgr}</td><td style="font-weight:600">${e.city}${hlBadge(e.city)}</td><td>${e.cat1}</td><td>${e.cat2}</td><td>${e.cat3||'-'}</td><td style="text-align:right;font-weight:600">¥${e.price30.toLocaleString()}</td><td style="text-align:right;color:var(--text2)">¥${e.dailyPrice}</td></tr>`;
   });
 
-  if (!data.length) h += '<tr><td colspan="10"><div class="empty-state"><div class="icon">📭</div>没有匹配的空位</div></td></tr>';
+  if (!data.length) h += '<tr><td colspan="9"><div class="empty-state"><div class="icon">📭</div>没有匹配的空位</div></td></tr>';
   h += '</tbody></table></div></div>';
   document.getElementById('tableArea').innerHTML = h;
 }
@@ -490,13 +490,13 @@ function downloadEmpty() {
     rows = getFilteredEmpty();
   }
   if (!rows.length) { alert('没有可下载的数据'); return; }
-  const wsData = [['大区','渠道经理','服务商','城市','一级类目','二级类目','三级类目','刊例价/30天','日均价']];
+  const wsData = [['大区','渠道经理','城市','一级类目','二级类目','三级类目','刊例价/30天','日均价']];
   rows.sort((a,b)=>a.city.localeCompare(b.city)).forEach(e => {
-    wsData.push([e.region, e.mgr, e.sp, e.city, e.cat1, e.cat2, e.cat3||'', e.price30, e.dailyPrice]);
+    wsData.push([e.region, e.mgr, e.city, e.cat1, e.cat2, e.cat3||'', e.price30, e.dailyPrice]);
   });
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.aoa_to_sheet(wsData);
-  ws['!cols'] = [{wch:8},{wch:10},{wch:22},{wch:10},{wch:8},{wch:12},{wch:12},{wch:12},{wch:8}];
+  ws['!cols'] = [{wch:8},{wch:10},{wch:10},{wch:8},{wch:12},{wch:12},{wch:12},{wch:8}];
   XLSX.utils.book_append_sheet(wb, ws, '可售空位');
   const label = selected.size ? Array.from(selected).join('_').slice(0,40) : '全部';
   XLSX.writeFile(wb, productNames[currentProduct] + '_可售空位_' + label + '_' + DATA.date + '.xlsx');
