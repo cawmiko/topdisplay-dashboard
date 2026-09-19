@@ -162,6 +162,8 @@ tr.row-hot{background:#FFF7ED}tr.row-hot:hover{background:#FFF1E0}
 .dl-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border:1px solid var(--blue-border);border-radius:8px;background:var(--blue-bg);color:var(--blue);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;font-family:inherit}
 .dl-btn:hover{background:var(--blue);color:#fff;border-color:var(--blue)}
 .dl-btn svg{width:14px;height:14px;fill:currentColor}
+.dl-combo{border-color:#FCD34D;background:#FFFBEB;color:#D97706}
+.dl-combo:hover{background:#D97706;color:#fff;border-color:#D97706}
 .city-picker{position:relative;display:inline-block}
 .city-picker-btn{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:var(--card);color:var(--text2);font-size:12px;cursor:pointer;transition:all .15s;font-family:inherit}
 .city-picker-btn:hover{border-color:var(--accent);color:var(--accent)}
@@ -384,6 +386,7 @@ function renderSlots() {
   });
   h += `</div><div class="dl-actions"><button class="sel-all" onclick="toggleAllSlotCities()">全选</button><button class="dl-go" onclick="downloadSlots()">下载 XLSX</button></div></div></div>`;
   h += `<button class="dl-btn" onclick="downloadSlots()"><svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>下载</button>`;
+  h += `<button class="dl-btn dl-combo" onclick="downloadCombined()">📦 合并下载</button>`;
   h += `</div></div>`;
   h += '<div class="scrollable"><table><thead><tr><th></th><th>紧急度</th><th>大区</th><th>渠道经理</th><th>城市</th><th>类目</th><th>占用数</th><th>可抢</th><th>最早到期</th><th>剩余天数</th></tr></thead><tbody>';
 
@@ -433,6 +436,7 @@ function renderEmpty() {
   });
   h += `</div><div class="dl-actions"><button class="sel-all" onclick="toggleAllCities(${cities.length})">全选</button><button class="dl-go" onclick="downloadEmpty()">下载 XLSX</button></div></div></div>`;
   h += `<button class="dl-btn" onclick="downloadEmpty()"><svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>下载</button>`;
+  h += `<button class="dl-btn dl-combo" onclick="downloadCombined()">📦 合并下载</button>`;
   h += `</div></div>`;
   h += '<div class="scrollable"><table><thead><tr><th>热门</th><th>大区</th><th>渠道经理</th><th>城市</th><th>一级类目</th><th>二级类目</th><th>三级类目</th><th>刊例价/30天</th><th>日均价</th></tr></thead><tbody>';
 
@@ -549,6 +553,43 @@ function downloadSlots() {
   XLSX.utils.book_append_sheet(wb, ws, '坑位追踪');
   const label = selected.size ? Array.from(selected).join('_').slice(0,40) : '全部';
   XLSX.writeFile(wb, productNames[currentProduct] + '_坑位追踪_' + label + '_' + DATA.date + '.xlsx');
+}
+
+function downloadCombined() {
+  const isSlotTab = currentTab === 'slots';
+  const selected = isSlotTab ? window._dlSlotCities : window._dlCities;
+  let slotRows, emptyRows;
+  if (selected && selected.size > 0) {
+    slotRows = curData().slots.filter(s => selected.has(s.city));
+    emptyRows = curData().empty.filter(e => selected.has(e.city));
+  } else {
+    slotRows = getFilteredSlots();
+    emptyRows = getFilteredEmpty();
+  }
+  if (!slotRows.length && !emptyRows.length) { alert('没有可下载的数据'); return; }
+  const wb = XLSX.utils.book_new();
+  // Sheet 1: 坑位追踪
+  if (slotRows.length) {
+    const sData = [['紧急度','大区','渠道经理','城市','一级类目','二级类目','三级类目','占用数','可抢数','最早到期','剩余天数']];
+    slotRows.sort((a,b)=>a.minDays-b.minDays).forEach(s => {
+      sData.push([s.urgency, s.region, s.mgr, s.city, s.cat1, s.cat2, s.cat3||'', s.orders, s.grab, s.minEnd, s.minDays]);
+    });
+    const ws1 = XLSX.utils.aoa_to_sheet(sData);
+    ws1['!cols'] = [{wch:16},{wch:8},{wch:14},{wch:10},{wch:8},{wch:12},{wch:12},{wch:8},{wch:8},{wch:10},{wch:8}];
+    XLSX.utils.book_append_sheet(wb, ws1, '坑位追踪');
+  }
+  // Sheet 2: 可售空位
+  if (emptyRows.length) {
+    const eData = [['大区','渠道经理','城市','一级类目','二级类目','三级类目','刊例价/30天','日均价']];
+    emptyRows.sort((a,b)=>a.city.localeCompare(b.city)).forEach(e => {
+      eData.push([e.region, e.mgr, e.city, e.cat1, e.cat2, e.cat3||'', e.price30, e.dailyPrice]);
+    });
+    const ws2 = XLSX.utils.aoa_to_sheet(eData);
+    ws2['!cols'] = [{wch:8},{wch:14},{wch:10},{wch:8},{wch:12},{wch:12},{wch:12},{wch:8}];
+    XLSX.utils.book_append_sheet(wb, ws2, '可售空位');
+  }
+  const label = (selected && selected.size) ? Array.from(selected).join('_').slice(0,40) : '全部';
+  XLSX.writeFile(wb, productNames[currentProduct] + '_合并_' + label + '_' + DATA.date + '.xlsx');
 }
 
 function renderCity() {
