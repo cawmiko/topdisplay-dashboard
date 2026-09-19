@@ -494,13 +494,13 @@ function downloadEmpty() {
     rows = getFilteredEmpty();
   }
   if (!rows.length) { alert('没有可下载的数据'); return; }
-  const wsData = [['大区','渠道经理','城市','一级类目','二级类目','三级类目','刊例价/30天','日均价']];
+  const wsData = [['大区','渠道经理','城市','一级类目','二级类目','三级类目','刊例价/30天','日均价','是否高流','是否核心类目']];
   rows.sort((a,b)=>a.city.localeCompare(b.city)).forEach(e => {
-    wsData.push([e.region, e.mgr, e.city, e.cat1, e.cat2, e.cat3||'', e.price30, e.dailyPrice]);
+    wsData.push([e.region, e.mgr, e.city, e.cat1, e.cat2, e.cat3||'', e.price30, e.dailyPrice, DATA.hlCities.has(e.city)?'是':'否', isHot(e)?'是':'否']);
   });
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.aoa_to_sheet(wsData);
-  ws['!cols'] = [{wch:8},{wch:10},{wch:10},{wch:8},{wch:12},{wch:12},{wch:12},{wch:8}];
+  ws['!cols'] = [{wch:8},{wch:10},{wch:10},{wch:8},{wch:12},{wch:12},{wch:12},{wch:8},{wch:8},{wch:10}];
   XLSX.utils.book_append_sheet(wb, ws, '可售空位');
   const label = selected.size ? Array.from(selected).join('_').slice(0,40) : '全部';
   XLSX.writeFile(wb, productNames[currentProduct] + '_可售空位_' + label + '_' + DATA.date + '.xlsx');
@@ -543,13 +543,13 @@ function downloadSlots() {
     rows = getFilteredSlots();
   }
   if (!rows.length) { alert('没有可下载的数据'); return; }
-  const wsData = [['紧急度','大区','渠道经理','服务商','城市','一级类目','二级类目','三级类目','占用数','可抢数','最早到期','剩余天数']];
+  const wsData = [['紧急度','大区','渠道经理','服务商','城市','一级类目','二级类目','三级类目','占用数','可抢数','最早到期','剩余天数','是否高流','是否核心类目']];
   rows.sort((a,b)=>a.minDays-b.minDays).forEach(s => {
-    wsData.push([s.urgency, s.region, s.mgr, s.sp, s.city, s.cat1, s.cat2, s.cat3||'', s.orders, s.grab, s.minEnd, s.minDays]);
+    wsData.push([s.urgency, s.region, s.mgr, s.sp, s.city, s.cat1, s.cat2, s.cat3||'', s.orders, s.grab, s.minEnd, s.minDays, DATA.hlCities.has(s.city)?'是':'否', isHot(s)?'是':'否']);
   });
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.aoa_to_sheet(wsData);
-  ws['!cols'] = [{wch:12},{wch:8},{wch:10},{wch:22},{wch:10},{wch:8},{wch:12},{wch:12},{wch:8},{wch:8},{wch:10},{wch:8}];
+  ws['!cols'] = [{wch:12},{wch:8},{wch:10},{wch:22},{wch:10},{wch:8},{wch:12},{wch:12},{wch:8},{wch:8},{wch:10},{wch:8},{wch:8},{wch:10}];
   XLSX.utils.book_append_sheet(wb, ws, '坑位追踪');
   const label = selected.size ? Array.from(selected).join('_').slice(0,40) : '全部';
   XLSX.writeFile(wb, productNames[currentProduct] + '_坑位追踪_' + label + '_' + DATA.date + '.xlsx');
@@ -570,22 +570,22 @@ function downloadCombined() {
   const wb = XLSX.utils.book_new();
   // Sheet 1: 坑位追踪
   if (slotRows.length) {
-    const sData = [['紧急度','大区','渠道经理','城市','一级类目','二级类目','三级类目','占用数','可抢数','最早到期','剩余天数']];
+    const sData = [['紧急度','大区','渠道经理','城市','一级类目','二级类目','三级类目','占用数','可抢数','最早到期','剩余天数','是否高流','是否核心类目']];
     slotRows.sort((a,b)=>a.minDays-b.minDays).forEach(s => {
-      sData.push([s.urgency, s.region, s.mgr, s.city, s.cat1, s.cat2, s.cat3||'', s.orders, s.grab, s.minEnd, s.minDays]);
+      sData.push([s.urgency, s.region, s.mgr, s.city, s.cat1, s.cat2, s.cat3||'', s.orders, s.grab, s.minEnd, s.minDays, DATA.hlCities.has(s.city)?'是':'否', isHot(s)?'是':'否']);
     });
     const ws1 = XLSX.utils.aoa_to_sheet(sData);
-    ws1['!cols'] = [{wch:16},{wch:8},{wch:14},{wch:10},{wch:8},{wch:12},{wch:12},{wch:8},{wch:8},{wch:10},{wch:8}];
+    ws1['!cols'] = [{wch:16},{wch:8},{wch:14},{wch:10},{wch:8},{wch:12},{wch:12},{wch:8},{wch:8},{wch:10},{wch:8},{wch:8},{wch:10}];
     XLSX.utils.book_append_sheet(wb, ws1, '坑位追踪');
   }
   // Sheet 2: 可售空位
   if (emptyRows.length) {
-    const eData = [['大区','渠道经理','城市','一级类目','二级类目','三级类目','刊例价/30天','日均价']];
+    const eData = [['大区','渠道经理','城市','一级类目','二级类目','三级类目','刊例价/30天','日均价','是否高流','是否核心类目']];
     emptyRows.sort((a,b)=>a.city.localeCompare(b.city)).forEach(e => {
-      eData.push([e.region, e.mgr, e.city, e.cat1, e.cat2, e.cat3||'', e.price30, e.dailyPrice]);
+      eData.push([e.region, e.mgr, e.city, e.cat1, e.cat2, e.cat3||'', e.price30, e.dailyPrice, DATA.hlCities.has(e.city)?'是':'否', isHot(e)?'是':'否']);
     });
     const ws2 = XLSX.utils.aoa_to_sheet(eData);
-    ws2['!cols'] = [{wch:8},{wch:14},{wch:10},{wch:8},{wch:12},{wch:12},{wch:12},{wch:8}];
+    ws2['!cols'] = [{wch:8},{wch:14},{wch:10},{wch:8},{wch:12},{wch:12},{wch:12},{wch:8},{wch:8},{wch:10}];
     XLSX.utils.book_append_sheet(wb, ws2, '可售空位');
   }
   const label = (selected && selected.size) ? Array.from(selected).join('_').slice(0,40) : '全部';
