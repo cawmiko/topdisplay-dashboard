@@ -592,9 +592,24 @@ function downloadCombined() {
   XLSX.writeFile(wb, productNames[currentProduct] + '_合并_' + label + '_' + DATA.date + '.xlsx');
 }
 
+function downloadCity() {
+  const rows = getFilteredCity().sort((a,b) => b.urgentSlots - a.urgentSlots || b.empty - a.empty);
+  if (!rows.length) { alert('没有可下载的数据'); return; }
+  const wsData = [['大区','渠道经理','城市','是否高流','可售空位','已占坑位','总坑位','空置率','紧急坑位']];
+  rows.forEach(c => {
+    wsData.push([c.region, c.mgr, c.city, DATA.hlCities.has(c.city)?'是':'否', c.empty, c.occupied, c.total, (c.rate*100).toFixed(1)+'%', c.urgentSlots]);
+  });
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  ws['!cols'] = [{wch:8},{wch:10},{wch:10},{wch:8},{wch:8},{wch:8},{wch:8},{wch:8},{wch:8}];
+  XLSX.utils.book_append_sheet(wb, ws, '城市总览');
+  XLSX.writeFile(wb, productNames[currentProduct] + '_城市总览_' + DATA.date + '.xlsx');
+}
+
 function renderCity() {
   const data = getFilteredCity().sort((a,b) => b.urgentSlots - a.urgentSlots || b.empty - a.empty);
-  let h = `<div class="table-wrap"><div class="table-header"><div class="left"><span class="table-title">城市维度总览</span><span class="table-count">${data.length} 个城市</span></div></div>`;
+  let h = `<div class="table-wrap"><div class="table-header"><div class="left"><span class="table-title">城市维度总览</span><span class="table-count">${data.length} 个城市</span></div>`;
+  h += `<div class="dl-bar"><button class="dl-btn" onclick="downloadCity()"><svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>下载</button></div></div>`;
   h += '<div class="scrollable"><table><thead><tr><th>大区</th><th>渠道经理</th><th>城市</th><th>可售空位</th><th>已占坑位</th><th>总坑位</th><th>空置率</th><th>紧急坑位</th></tr></thead><tbody>';
 
   data.forEach(c => {
