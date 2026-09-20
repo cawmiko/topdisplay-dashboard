@@ -496,7 +496,7 @@ function downloadEmpty() {
   if (!rows.length) { alert('没有可下载的数据'); return; }
   const wsData = [['大区','渠道经理','城市','一级类目','二级类目','三级类目','刊例价/30天','日均价','是否高流','是否核心类目']];
   rows.sort((a,b)=>a.city.localeCompare(b.city)).forEach(e => {
-    wsData.push([e.region, e.mgr, e.city, e.cat1, e.cat2, e.cat3||'', e.price30, e.dailyPrice, DATA.hlCities.has(e.city)?'是':'否', isHot(e)?'是':'否']);
+    wsData.push([e.region, e.mgr, e.city, e.cat1, e.cat2, e.cat3||'', e.price30, e.dailyPrice, hlSet.has(e.city)?'是':'否', isHot(e)?'是':'否']);
   });
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.aoa_to_sheet(wsData);
@@ -545,7 +545,7 @@ function downloadSlots() {
   if (!rows.length) { alert('没有可下载的数据'); return; }
   const wsData = [['紧急度','大区','渠道经理','服务商','城市','一级类目','二级类目','三级类目','占用数','可抢数','最早到期','剩余天数','是否高流','是否核心类目']];
   rows.sort((a,b)=>a.minDays-b.minDays).forEach(s => {
-    wsData.push([s.urgency, s.region, s.mgr, s.sp, s.city, s.cat1, s.cat2, s.cat3||'', s.orders, s.grab, s.minEnd, s.minDays, DATA.hlCities.has(s.city)?'是':'否', isHot(s)?'是':'否']);
+    wsData.push([s.urgency, s.region, s.mgr, s.sp, s.city, s.cat1, s.cat2, s.cat3||'', s.orders, s.grab, s.minEnd, s.minDays, hlSet.has(s.city)?'是':'否', isHot(s)?'是':'否']);
   });
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.aoa_to_sheet(wsData);
@@ -572,7 +572,7 @@ function downloadCombined() {
   if (slotRows.length) {
     const sData = [['紧急度','大区','渠道经理','城市','一级类目','二级类目','三级类目','占用数','可抢数','最早到期','剩余天数','是否高流','是否核心类目']];
     slotRows.sort((a,b)=>a.minDays-b.minDays).forEach(s => {
-      sData.push([s.urgency, s.region, s.mgr, s.city, s.cat1, s.cat2, s.cat3||'', s.orders, s.grab, s.minEnd, s.minDays, DATA.hlCities.has(s.city)?'是':'否', isHot(s)?'是':'否']);
+      sData.push([s.urgency, s.region, s.mgr, s.city, s.cat1, s.cat2, s.cat3||'', s.orders, s.grab, s.minEnd, s.minDays, hlSet.has(s.city)?'是':'否', isHot(s)?'是':'否']);
     });
     const ws1 = XLSX.utils.aoa_to_sheet(sData);
     ws1['!cols'] = [{wch:16},{wch:8},{wch:14},{wch:10},{wch:8},{wch:12},{wch:12},{wch:8},{wch:8},{wch:10},{wch:8},{wch:8},{wch:10}];
@@ -582,7 +582,7 @@ function downloadCombined() {
   if (emptyRows.length) {
     const eData = [['大区','渠道经理','城市','一级类目','二级类目','三级类目','刊例价/30天','日均价','是否高流','是否核心类目']];
     emptyRows.sort((a,b)=>a.city.localeCompare(b.city)).forEach(e => {
-      eData.push([e.region, e.mgr, e.city, e.cat1, e.cat2, e.cat3||'', e.price30, e.dailyPrice, DATA.hlCities.has(e.city)?'是':'否', isHot(e)?'是':'否']);
+      eData.push([e.region, e.mgr, e.city, e.cat1, e.cat2, e.cat3||'', e.price30, e.dailyPrice, hlSet.has(e.city)?'是':'否', isHot(e)?'是':'否']);
     });
     const ws2 = XLSX.utils.aoa_to_sheet(eData);
     ws2['!cols'] = [{wch:8},{wch:14},{wch:10},{wch:8},{wch:12},{wch:12},{wch:12},{wch:8},{wch:8},{wch:10}];
@@ -597,7 +597,7 @@ function downloadCity() {
   if (!rows.length) { alert('没有可下载的数据'); return; }
   const wsData = [['大区','渠道经理','城市','是否高流','可售空位','已占坑位','总坑位','空置率','紧急坑位']];
   rows.forEach(c => {
-    wsData.push([c.region, c.mgr, c.city, DATA.hlCities.has(c.city)?'是':'否', c.empty, c.occupied, c.total, (c.rate*100).toFixed(1)+'%', c.urgentSlots]);
+    wsData.push([c.region, c.mgr, c.city, hlSet.has(c.city)?'是':'否', c.empty, c.occupied, c.total, (c.rate*100).toFixed(1)+'%', c.urgentSlots]);
   });
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.aoa_to_sheet(wsData);
